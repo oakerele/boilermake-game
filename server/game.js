@@ -4,7 +4,7 @@
 
 module.exports = {
     "perform": function (msg) {return command(msg)},
-    "newPlayer": function (userId, socketId) {return new Player(userId, socketId)},
+    "newPlayer": function (id, socketId, room) {return new Player(id, socketId, room)},
     "addPlayer": function (player) {playerList.push(player)},
     "removePlayer": function (loc) {playerList.splice(loc)},
     "getPlayers": function () {return playerList},
@@ -13,7 +13,7 @@ module.exports = {
     "removePlayerName": function (loc) {playerNames.splice(loc)},
 
     "newWorld": function () {newWorld()},
-    "getRoom": function (roomNum) {return roomList[roomNum]}
+    "getRoom": function (id) {return roomList[id]}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -21,8 +21,8 @@ module.exports = {
 ////////////////////////////////////////////////////////////////////////////////
 
 class Room {
-    constructor(roomname, desc, doors, items) {
-        this.roomname = roomname;
+    constructor(id, desc, doors, items) {
+        this.id = id;
         this.desc = desc;
         this.doors = doors;
         this.items = items;
@@ -30,21 +30,21 @@ class Room {
 }
 
 class Door {
-    constructor(roomname, dir) {
-        this.roomname = roomname;
+    constructor(roomnum, dir) {
+        this.roomnum = roomnum;
         this.dir = dir;
     }
 }
 
 class Item {
-    constructor(name) {
-        this.name = name;
+    constructor(id) {
+        this.id = id;
     }
 }
 
 class Player {
-    constructor(userId, socketId, room) {
-        this.userId = userId;
+    constructor(id, socketId, room) {
+        this.id = id;
         this.socketId = socketId;
         this.room = room;
     }
@@ -56,15 +56,15 @@ var doorList = []
 
 function newWorld() {
     roomList.push(randRoom());
-    roomList.push(new Room("2", "living room", [new Door("1", "west")], "gun"));
+    roomList.push(new Room("1", "living room", [new Door("0", "west")], "gun"));
 }
 
 function randRoom() {
     var desc1 = "kitchen";
     var desc2 = "living room";
-    var door1 = new Door("2", "east");
+    var door1 = new Door("1", "east");
     var item1 = "knife";
-    return new Room("1", desc1, [door1], item1);
+    return new Room("0", desc1, [door1], item1);
 }
 ////////////////////////////////////////////////////////////////////////////////
 // PARSING
@@ -282,7 +282,25 @@ function invoke(command, name) {
 
 function move(name, direction) {
     // TODO: write implementation to actually move player
-    return "went " + direction
+    for (var i = 0; i < playerList.length; i++) {
+        if (playerList[i].id == name) {
+            var possibleDoors = [];
+            console.log(playerList[i]);
+            var playerDoorList = playerList[i].room.doors;
+            for (var j = 0; j < playerDoorList.length; j++) {
+                if (playerDoorList[j].dir == direction) {
+                    var roomnum = playerDoorList[j].roomnum;
+                    var room = roomList[roomnum];
+                    playerList[i].room = room;
+                    console.log("Player is in Room " + playerList[i].room.id);
+                    return "went " + direction;
+                } else {
+                    return "cannot go " + direction;
+                }
+            }
+        }
+    }
+    return "cannot go " + direction;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

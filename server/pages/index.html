@@ -47,7 +47,7 @@
         });
 
         socket.on("playerStatus", function(data) {
-          $("#messages").append($("<li>").text("You are in Room " + data.room.roomname));
+          $("#messages").append($("<li>").text("You are in Room " + data.room.id));
           $("#messages").scrollTop($("#messages").prop("scrollHeight"));
         });
       });

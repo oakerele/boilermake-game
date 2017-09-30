@@ -30,7 +30,7 @@ io.on("connection", function(socket) {
         var name;
         for (var i = 0; i < list.length; i++) {
             if (list[i].socketId == socket.id) {
-                name = list[i].userId;
+                name = list[i].id;
                 game.removePlayer(i);
             }
         }
@@ -47,11 +47,12 @@ io.on("connection", function(socket) {
     });
 
     socket.on("register", function(data) {
-        var roomNum = Math.floor(Math.random() * 2);
-        var newUser = new game.newPlayer(data, socket.id, roomNum);
+        var id = Math.floor(Math.random() * 2);
+        var room = game.getRoom(id);
+        var newUser = new game.newPlayer(data, socket.id, room);
         game.addPlayer(newUser);
         game.addPlayerName(data);
-        socket.emit("playerStatus", {room: game.getRoom(roomNum)});
+        socket.emit("playerStatus", {room: room});
     });
 })
 
