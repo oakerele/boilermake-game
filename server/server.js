@@ -1,6 +1,6 @@
 var express = require("express");
 var routes = require("./routes.js");
-var port = process.env.PORT || 3000;
+var port = process.env.PORT || 3001;
 
 var app = express();
 
@@ -20,7 +20,7 @@ app.set("views", process.cwd() + "/pages/");
 
 // INPUT HANDLING
 
-app.use(bodyParser.urlencoded({extended: true})); // extract json from post request as req.body
+//app.use(bodyParser.urlencoded({extended: true})); // extract json from post request as req.body
 
 // LINK ROUTES
 

@@ -2,7 +2,7 @@ module.exports = function(app) {
     
     app.get("/", (req, res, next) => {
         // Render page
-        res.render("index.ejs", {"cwd": process.cwd());
+        res.render("index.ejs", {"cwd": process.cwd()});
     });
     
     app.get("*.html", (req, res, next) => { // for all pages not already caught
