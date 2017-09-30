@@ -3,14 +3,51 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 module.exports = {
-    "perform": function (msg) {return command(msg)}
+    "perform": function (msg) {return command(msg)},
+    "newPlayer": function (userId, socketId) {return new Player(userId, socketId)},
+    "addPlayer": function (player) {playerList.push(player)},
+    "removePlayer": function (loc) {playerList.splice(loc)},
+    "getPlayers": function () {return playerList},
+    "getPlayerNames": function () {return playerNames},
+    "addPlayerName": function (name) {console.log(name); playerNames.push(name);},
+    "removePlayerName": function (loc) {playerNames.splice(loc)}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // DATA STRUCTURE
 ////////////////////////////////////////////////////////////////////////////////
 
+class Room {
+    constructor(roomname, desc, doors, items, players) {
+        this.roomname = roomname;
+        this.desc = desc;
+        this.doors = doors;
+        this.items = items;
+        this.players = players;
+    }
+}
 
+class Door {
+    constructor(roomname, dir) {
+        this.roomname = roomname;
+        this.dir = dir;
+    }
+}
+
+class Item {
+    constructor(name) {
+        this.name = name;
+    }
+}
+
+class Player {
+    constructor(userId, socketId) {
+        this.userId = userId;
+        this.socketId = socketId;
+    }
+}
+
+var playerList = []
 
 ////////////////////////////////////////////////////////////////////////////////
 // PARSING
@@ -27,9 +64,6 @@ var playerNames = []
 
 
 function lexer(text) {
-    for (var i = 0; i < text.length; i++) {
-        console.log(text[i])
-    }
     return null
 }
 
@@ -42,7 +76,7 @@ function parser(tokens) {
 ////////////////////////////////////////////////////////////////////////////////
 
 function invoke(verbPhrase) {
-    return "test"
+    return verbPhrase.name + ": " + verbPhrase.msg;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -52,5 +86,5 @@ function invoke(verbPhrase) {
 function command(text) {
     var tokens = lexer(text)
     var command = parser(tokens)
-    return invoke(command)
+    return invoke(text)
 }

@@ -7,10 +7,10 @@
 body { 
     font-size: 16px; 
     font-family: 'Times New Roman', Times, serif; 
-    background: #eee
+    background: #eee;
 }
 
-form { 
+#prompt { 
     background: #eee; 
     position: fixed; 
     left: 12.5%; 
@@ -18,7 +18,7 @@ form {
     width: 75%; 
 }
 
-form input {
+#m {
     font-size: 16px; 
     font-family: 'Times New Roman', Times, serif;
     border: 1px solid black; 
@@ -27,7 +27,7 @@ form input {
     margin-right: 5px; 
 }
 
-form button { 
+#send { 
     width: 100px; 
     background: #eee;
     font-size: 16px;
@@ -60,12 +60,11 @@ form button {
     background: white; 
 }
 
-#send {
-    font-size: 16px; 
-    font-family: 'Times New Roman', Times, serif
-}
-
 #message {
     font-size: 16px; 
     font-family: 'Times New Roman', Times, serif
 }
+
+#user {font-family: 'Times New Roman', Times, serif; font-size: 16px; position: absolute; top: 50%;
+    left: 50%; border: 1px solid black; transform: translate(-50%, -50%);}
+#sub {font-family: 'Times New Roman', Times, serif; font-size: 16px;}

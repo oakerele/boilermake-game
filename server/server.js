@@ -11,21 +11,44 @@ var port = process.env.PORT || 3001
 // STATIC HOSTING
 ////////////////////////////////////////////////////////////////////////////////
 
-app.use(express.static(__dirname + "/pages"))
+app.get('/', function(req, res) {
+    res.sendFile(__dirname + '/pages/index.html');
+});
+app.use(express.static(__dirname + "/pages"));
 
 ////////////////////////////////////////////////////////////////////////////////
 // SOCKET CONNECTIONS
 ////////////////////////////////////////////////////////////////////////////////
 
 io.on("connection", function(socket) {
-    console.log("user connected.")
+
     socket.on("disconnect", function() {
-        console.log("user disconnected.")
-    })
+        var list = game.getPlayers();
+        var namelist = game.getPlayerNames();
+        var name;
+        for (var i = 0; i < list.length; i++) {
+            if (list[i].socketId == socket.id) {
+                name = list[i].userId;
+                game.removePlayer(i);
+            }
+        }
+        for (var i = 0; i < namelist.length; i++) {
+            if (namelist[i] == name) {
+                game.removePlayerName(i);
+                console.log("Removed Name!");
+            }
+        }
+    });
     
-    socket.on("command", function(msg) {
-        io.emit("response", {"message" : game.perform(msg)})
-    })
+    socket.on("command", function(data) {
+        io.emit("response", {"message" : game.perform(data)});
+    });
+
+    socket.on("register", function(data) {
+        var newUser = new game.newPlayer(data, socket.id);
+        game.addPlayer(newUser);
+        game.addPlayerName(data);
+    });
 })
 
 ////////////////////////////////////////////////////////////////////////////////
