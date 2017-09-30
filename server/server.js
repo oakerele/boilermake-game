@@ -20,6 +20,8 @@ app.use(express.static(__dirname + "/pages"));
 // SOCKET CONNECTIONS
 ////////////////////////////////////////////////////////////////////////////////
 
+game.newWorld();
+
 io.on("connection", function(socket) {
 
     socket.on("disconnect", function() {
@@ -45,9 +47,11 @@ io.on("connection", function(socket) {
     });
 
     socket.on("register", function(data) {
-        var newUser = new game.newPlayer(data, socket.id);
+        var roomNum = Math.floor(Math.random() * 2);
+        var newUser = new game.newPlayer(data, socket.id, roomNum);
         game.addPlayer(newUser);
         game.addPlayerName(data);
+        socket.emit("playerStatus", {room: game.getRoom(roomNum)});
     });
 })
 

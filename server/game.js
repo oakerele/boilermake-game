@@ -10,7 +10,10 @@ module.exports = {
     "getPlayers": function () {return playerList},
     "getPlayerNames": function () {return playerNames},
     "addPlayerName": function (name) {playerNames.push(name);},
-    "removePlayerName": function (loc) {playerNames.splice(loc)}
+    "removePlayerName": function (loc) {playerNames.splice(loc)},
+
+    "newWorld": function () {newWorld()},
+    "getRoom": function (roomNum) {return roomList[roomNum]}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -18,12 +21,11 @@ module.exports = {
 ////////////////////////////////////////////////////////////////////////////////
 
 class Room {
-    constructor(roomname, desc, doors, items, players) {
+    constructor(roomname, desc, doors, items) {
         this.roomname = roomname;
         this.desc = desc;
         this.doors = doors;
         this.items = items;
-        this.players = players;
     }
 }
 
@@ -41,14 +43,29 @@ class Item {
 }
 
 class Player {
-    constructor(userId, socketId) {
+    constructor(userId, socketId, room) {
         this.userId = userId;
         this.socketId = socketId;
+        this.room = room;
     }
 }
 
 var playerList = []
+var roomList = []
+var doorList = []
 
+function newWorld() {
+    roomList.push(randRoom());
+    roomList.push(new Room("2", "living room", [new Door("1", "west")], "gun"));
+}
+
+function randRoom() {
+    var desc1 = "kitchen";
+    var desc2 = "living room";
+    var door1 = new Door("2", "east");
+    var item1 = "knife";
+    return new Room("1", desc1, [door1], item1);
+}
 ////////////////////////////////////////////////////////////////////////////////
 // PARSING
 ////////////////////////////////////////////////////////////////////////////////
