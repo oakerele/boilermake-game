@@ -1,0 +1,43 @@
+.game-body {
+    width: 100%;
+    margin: 0 auto;
+}
+
+.command-list {
+    width: 100%;
+    margin: 0 auto;
+}
+
+.command-list h5 {
+    position: relative;
+    display: block;
+    padding: .4em .4em .4em 2em;
+    margin: .5em 0;
+    background: #5975D9;
+    color: white;
+    text-decoration: none;
+}
+
+.game-input {
+    width: calc(100% - 120px);
+    border: 2px dashed brown;
+    font-size: 14px;
+}
+
+.game-send {
+    display: inline-block;
+    width: 80px;
+    font-size: 20px;
+    border-radius: 4px;
+    background-color: brown;
+    color: white;
+    font-weight: bold;
+}
+
+.game-input-section {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: 10px;
+}
