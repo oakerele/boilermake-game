@@ -18,7 +18,6 @@ app.set("views", process.cwd() + "/pages/");
 
 // STATIC RESOURCE HOSTING
 
-app.use("/resources/materialize/", express.static(process.cwd() + "/node_modules/materialize-css/dist/"));
 app.use("/resources/jquery/", express.static(process.cwd() + "/node_modules/jquery/dist/"));
 
 // INPUT HANDLING

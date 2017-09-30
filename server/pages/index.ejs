@@ -7,10 +7,6 @@
     
     <!-- JQUERY -->
     <script type="text/javascript" src="/resources/jquery/jquery.min.js"></script>
-
-    <!-- MATERIALIZE -->
-    <link rel="stylesheet" href="/resources/materialize/css/materialize.min.css">
-    <script type="text/javascript" src="/resources/materialize/js/materialize.min.js"></script>
     
     <link rel="stylesheet" href="/resources/game.css">
     <title>Document</title>
@@ -27,9 +23,23 @@
         </div>
         <div class="game-input-section">
             <textarea class="game-input" rows="3" type="text" value="" placeholder="Type in Game Command"></textarea>
-            <button class="game-send">Send</button>
+            <button id="send" class="game-send">Send</button>
         </div>
         
     </div>
+    
+    <script type="text/javascript">
+        function submitText(text) {
+            $.post("/command", {"command": "test"}, showResponse)
+        }
+        
+        function showResponse(data) {
+            console.log(data);
+        }
+        
+        $(document).ready(() => {
+            $("#send").click(submitText)
+        })
+    </script>
 </body>
 </html>

@@ -4,8 +4,11 @@
 // ROUTES
 ////////////////////////////////////////////////////////////////////////////////
 
-// module.exports = function(app) {
-//     
-//     // app.post("", )
-//     
-// }
+module.exports = function(app) {
+    
+    app.post("/command", (req, res, next) => {
+        
+        res.send({"message": "recieved"})
+    })
+    
+}
