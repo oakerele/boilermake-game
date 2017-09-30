@@ -3,7 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 module.exports = {
-    
+    "perform": function (msg) {return command(msg)}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -23,24 +23,34 @@ var Adjs = ["large", "small", "blue", "red", "gold"]
 var Ns = ["sword", "axe"] // & any names
 var Ps = ["in", "on", "at", "to"]
 var Vs = ["say", "yell", "whisper", "go", "take", "give", "pick up"]
+var playerNames = []
 
-
-// class
 
 function lexer(text) {
-    
+    for (var i = 0; i < text.length; i++) {
+        console.log(text[i])
+    }
+    return null
 }
 
 function parser(tokens) {
-    
+    return null
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // ACTIONS
 ////////////////////////////////////////////////////////////////////////////////
 
-
+function invoke(verbPhrase) {
+    return "test"
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // CLI
 ////////////////////////////////////////////////////////////////////////////////
+
+function command(text) {
+    var tokens = lexer(text)
+    var command = parser(tokens)
+    return invoke(command)
+}

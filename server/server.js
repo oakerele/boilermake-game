@@ -24,7 +24,7 @@ io.on("connection", function(socket) {
     })
     
     socket.on("command", function(msg) {
-        io.emit("action", {"command" : msg})
+        io.emit("response", {"message" : game.perform(msg)})
     })
 })
 

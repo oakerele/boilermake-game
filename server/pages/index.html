@@ -24,8 +24,8 @@
         return false;
       });
       
-      socket.on("action", function(data) {
-        $("#messages").append($("<li>").text(data.command));
+      socket.on("response", function(data) {
+        $("#messages").append($("<li>").text(data.message));
         $("#messages").scrollTop($("#messages").prop("scrollHeight"));
       });
     });
