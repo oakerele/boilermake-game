@@ -12,5 +12,9 @@
     "body-parser": "^1.18.2",
     "ejs": "^2.5.7",
     "express": "^4.16.1"
+  },
+  "dependencies": {
+    "fs": "0.0.1-security",
+    "socket.io": "^2.0.3"
   }
 }

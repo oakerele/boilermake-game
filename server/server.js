@@ -1,5 +1,7 @@
 var express = require("express");
 var routes = require("./routes.js");
+var http = require("http").Server(app);
+var io = require("socket.io")(http);
 var port = process.env.PORT || 3001;
 
 var app = express();
@@ -29,6 +31,12 @@ routes(app);
 // DATABASE CONNECTION
 
 
+
+// SOCKETS
+
+io.on("connection", function(socket){
+  console.log("a user connected");
+});
 
 ////////////////////////////////////////////////////////////////////////////////
 // SERVING
