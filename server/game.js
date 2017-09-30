@@ -76,7 +76,7 @@ var Ds = [] // ["the", "a"]
 var As = [] // ["large", "small", "blue", "red", "gold"]
 var Ns = ["north", "east", "south", "west"] // ["sword", "axe", "my", "me"] // & any names
 var Ps = [] // ["in", "on", "at", "to"]
-var Vs = ["go"] // ["say", "yell", "whisper", "go", "take", "give", "pick up", "throw"]
+var Vs = ["go", "move", "walk"] // ["say", "yell", "whisper", "go", "take", "give", "pick up", "throw"]
 var playerNames = []
 
 
@@ -265,22 +265,13 @@ function invoke(command, name) {
     if (command != null) {
         switch (command.V.string) {
             case "go":
+            case "move":
+            case "walk":
                 if (command.NP && command.NP.N) {
                     response = move(name, command.NP.N.string)
                 }
                 break
-            case "n":
-                response = move(name, "north")
-                break
-            case "e":
-                response = move(name, "east")
-                break
-            case "s":
-                response = move(name, "south")
-                break
-            case "w":
-                response = move(name, "west")
-                break
+            
         }
     }
     
