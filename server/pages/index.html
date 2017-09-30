@@ -36,7 +36,7 @@
         });
 
         $("#prompt").submit(function() {
-          socket.emit("command", {name: name, msg: $("#m").val()});
+          socket.emit("command", {"name": name, "msg": $("#m").val()});
           $("#m").val("");
           return false;
         });

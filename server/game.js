@@ -55,16 +55,16 @@ var playerList = []
 
 // DICTIONARY
 
-var Ds = ["the", "a"]
-var As = ["large", "small", "blue", "red", "gold"]
-var Ns = ["sword", "axe", "my", "me"] // & any names
-var Ps = ["in", "on", "at", "to"]
-var Vs = ["say", "yell", "whisper", "go", "take", "give", "pick up", "throw"]
+var Ds = [] // ["the", "a"]
+var As = [] // ["large", "small", "blue", "red", "gold"]
+var Ns = ["north", "east", "south", "west"] // ["sword", "axe", "my", "me"] // & any names
+var Ps = [] // ["in", "on", "at", "to"]
+var Vs = ["go"] // ["say", "yell", "whisper", "go", "take", "give", "pick up", "throw"]
 var playerNames = []
 
 
 function lexer(text) {
-
+    
     var tokens = []
     
     var substr = ""
@@ -240,18 +240,50 @@ function parsePrepositionalPhrase(tokens) {
 // ACTIONS
 ////////////////////////////////////////////////////////////////////////////////
 
-function invoke(c) {
-    console.log("C: ", c)
+// CALL ACTIONS
+
+function invoke(command, name) {
+    response = "The command could not be understood."
     
-    return c // FIXME: temporary
+    if (command != null) {
+        switch (command.V.string) {
+            case "go":
+                if (command.NP && command.NP.N) {
+                    response = move(name, command.NP.N.string)
+                }
+                break
+            case "n":
+                response = move(name, "north")
+                break
+            case "e":
+                response = move(name, "east")
+                break
+            case "s":
+                response = move(name, "south")
+                break
+            case "w":
+                response = move(name, "west")
+                break
+        }
+    }
+    
+    return response // FIXME: temporary
+}
+
+// ACTION LOGIC
+
+function move(name, direction) {
+    // TODO: write implementation to actually move player
+    return "went " + direction
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // CLI
 ////////////////////////////////////////////////////////////////////////////////
 
-function command(text) {
-    var tokens = lexer(text)
+function command(msg) {
+    var tokens = lexer(msg.msg)
     var command = parser(tokens)
-    return invoke(command)
+    var response = invoke(command, msg.name)
+    return response
 }
