@@ -1,22 +1,24 @@
 {
-  "name": "server",
+  "name": "server2",
   "version": "1.0.0",
-  "description": "Server for Boilermake Game",
-  "main": "server.js",
+  "description": "Game with socket.io",
+  "main": "index.js",
+  "dependencies": {
+    "express": "^4.16.1",
+    "socket.io": "^2.0.3"
+  },
+  "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "body-parser": "^1.18.2",
-    "ejs": "^2.5.7",
-    "express": "^4.16.1"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oakerele/boilermake-game.git"
   },
-  "dependencies": {
-    "fs": "0.0.1-security",
-    "jquery": "^3.2.1",
-    "materialize": "^1.0.0",
-    "socket.io": "^2.0.3"
-  }
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/oakerele/boilermake-game/issues"
+  },
+  "homepage": "https://github.com/oakerele/boilermake-game#readme"
 }

@@ -1,45 +1,21 @@
-var express = require("express");
-var routes = require("./routes.js");
-// var http = require("http").Server(app);
-// var io = require("socket.io")(http);
-var port = process.env.PORT || 3001;
-
+var express = require('express');
 var app = express();
+var http = require('http').Server(app);
+var io = require('socket.io')(http);
 
-////////////////////////////////////////////////////////////////////////////////
-// SETUP
-////////////////////////////////////////////////////////////////////////////////
+app.use(express.static(__dirname + '/pages'));
 
-// STATIC SITE HOSTING
+io.on('connection', function(socket) {
+    console.log('user connected.');
+    socket.on('disconnect', function() {
+        console.log('user disconnected.');
+    });
 
-app.use("/", express.static(process.cwd() + "/pages/"));
-app.set("view engine", "ejs");
-app.set("views", process.cwd() + "/pages/");
+    socket.on('command', function(msg) {
+        io.emit('action', {command : msg});
+    });
+});
 
-// STATIC RESOURCE HOSTING
-
-app.use("/resources/jquery/", express.static(process.cwd() + "/node_modules/jquery/dist/"));
-
-// INPUT HANDLING
-
-//app.use(bodyParser.urlencoded({extended: true})); // extract json from post request as req.body
-
-// LINK ROUTES
-
-routes(app);
-
-// DATABASE CONNECTION
-
-
-
-// SOCKETS
-
-// io.on("connection", function(socket){
-//   console.log("a user connected");
-// });
-
-////////////////////////////////////////////////////////////////////////////////
-// SERVING
-////////////////////////////////////////////////////////////////////////////////
-
-app.listen(port, () => {console.log("Server launched on port " + port + " at " + (new Date).toUTCString())})
+http.listen(3000, function(){
+     console.log('listening on *:3000');
+});
