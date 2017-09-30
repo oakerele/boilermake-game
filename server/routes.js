@@ -1,6 +1,9 @@
 var fs = require("fs");
+// var game = require("game.js")
 
 module.exports = function(app) {
+    
+    // game(app)
     
     app.get("/", (req, res, next) => {
         var words = ["This is just a test data", "Lorem Ipsum blac of the blah bla for all routes intended to be directories -> look for keep trying for all routes intended to be directories -> look forfor all routes intended to be directories -> look for one other way is the stuff"];

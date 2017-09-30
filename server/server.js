@@ -1,7 +1,7 @@
 var express = require("express");
 var routes = require("./routes.js");
-var http = require("http").Server(app);
-var io = require("socket.io")(http);
+// var http = require("http").Server(app);
+// var io = require("socket.io")(http);
 var port = process.env.PORT || 3001;
 
 var app = express();
@@ -18,7 +18,8 @@ app.set("views", process.cwd() + "/pages/");
 
 // STATIC RESOURCE HOSTING
 
-
+app.use("/resources/materialize/", express.static(process.cwd() + "/node_modules/materialize-css/dist/"));
+app.use("/resources/jquery/", express.static(process.cwd() + "/node_modules/jquery/dist/"));
 
 // INPUT HANDLING
 
@@ -34,9 +35,9 @@ routes(app);
 
 // SOCKETS
 
-io.on("connection", function(socket){
-  console.log("a user connected");
-});
+// io.on("connection", function(socket){
+//   console.log("a user connected");
+// });
 
 ////////////////////////////////////////////////////////////////////////////////
 // SERVING

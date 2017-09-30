@@ -4,13 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    
+    <!-- JQUERY -->
+    <script type="text/javascript" src="/resources/jquery/jquery.min.js"></script>
+
+    <!-- MATERIALIZE -->
+    <link rel="stylesheet" href="/resources/materialize/css/materialize.min.css">
+    <script type="text/javascript" src="/resources/materialize/js/materialize.min.js"></script>
+    
     <link rel="stylesheet" href="/resources/game.css">
     <title>Document</title>
 </head>
 <body>
     <div class="game-body">
         <div class="command-list">
-
+            
             <% for(var i=0; i<gameData.length; i++) {%>
                 <h5>
                     <%= gameData[i] %>
@@ -21,12 +29,7 @@
             <textarea class="game-input" rows="3" type="text" value="" placeholder="Type in Game Command"></textarea>
             <button class="game-send">Send</button>
         </div>
-
+        
     </div>
-    
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-        var socket = io();
-    </script>
 </body>
 </html>
