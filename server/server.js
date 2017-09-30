@@ -1,45 +1,58 @@
-var express = require("express");
-var routes = require("./routes.js");
-// var http = require("http").Server(app);
-// var io = require("socket.io")(http);
-var port = process.env.PORT || 3001;
+var express = require("express")
+var app = express()
+var http = require("http").Server(app)
+var io = require("socket.io")(http)
+var game = require("./game.js")
+var mongodb = require("mongodb")
 
-var app = express();
-
-////////////////////////////////////////////////////////////////////////////////
-// SETUP
-////////////////////////////////////////////////////////////////////////////////
-
-// STATIC SITE HOSTING
-
-app.use("/", express.static(process.cwd() + "/pages/"));
-app.set("view engine", "ejs");
-app.set("views", process.cwd() + "/pages/");
-
-// STATIC RESOURCE HOSTING
-
-app.use("/resources/jquery/", express.static(process.cwd() + "/node_modules/jquery/dist/"));
-
-// INPUT HANDLING
-
-//app.use(bodyParser.urlencoded({extended: true})); // extract json from post request as req.body
-
-// LINK ROUTES
-
-routes(app);
-
-// DATABASE CONNECTION
-
-
-
-// SOCKETS
-
-// io.on("connection", function(socket){
-//   console.log("a user connected");
-// });
+var port = process.env.PORT || 3001
 
 ////////////////////////////////////////////////////////////////////////////////
-// SERVING
+// STATIC HOSTING
 ////////////////////////////////////////////////////////////////////////////////
 
-app.listen(port, () => {console.log("Server launched on port " + port + " at " + (new Date).toUTCString())})
+app.get('/', function(req, res) {
+    res.sendFile(__dirname + '/pages/index.html');
+});
+app.use(express.static(__dirname + "/pages"));
+
+////////////////////////////////////////////////////////////////////////////////
+// SOCKET CONNECTIONS
+////////////////////////////////////////////////////////////////////////////////
+
+io.on("connection", function(socket) {
+
+    socket.on("disconnect", function() {
+        var list = game.getPlayers();
+        var namelist = game.getPlayerNames();
+        var name;
+        for (var i = 0; i < list.length; i++) {
+            if (list[i].socketId == socket.id) {
+                name = list[i].userId;
+                game.removePlayer(i);
+            }
+        }
+        for (var i = 0; i < namelist.length; i++) {
+            if (namelist[i] == name) {
+                game.removePlayerName(i);
+                console.log("Removed Name!");
+            }
+        }
+    });
+    
+    socket.on("command", function(data) {
+        io.emit("response", {"message" : game.perform(data)});
+    });
+
+    socket.on("register", function(data) {
+        var newUser = new game.newPlayer(data, socket.id);
+        game.addPlayer(newUser);
+        game.addPlayerName(data);
+    });
+})
+
+////////////////////////////////////////////////////////////////////////////////
+// RUN SERVER
+////////////////////////////////////////////////////////////////////////////////
+
+http.listen(port, () => { console.log("Server running on port " + port + " at "  + (new Date).toUTCString()) })

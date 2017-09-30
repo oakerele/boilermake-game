@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Murder Mansion</title>
+        <link rel="stylesheet" href="resources/interface.css">
+    </head>
+    
+    <body>
+        <form id="user" action="">
+            <input id="username" autocomplete="off" /><button id="sub">Submit</button> 
+         </form>
+        <ul id="messages"></ul>
+        <form id="prompt" action="">
+          <input id="m" autocomplete="off" /><button id="send">Send</button>
+        </form>
+    </body>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+    <script>
+      $(() => {
+        $("#messages").hide();
+        $("#prompt").hide();
+        $("#user").show();
+
+        var socket = io();
+        var name;
+        
+        $("#user").submit(function() {
+          $("#messages").show();
+          $("#prompt").show();
+          name = $("#username").val();
+          socket.emit("register", name);
+          $("#user").hide();
+          return false;
+        });
+
+        $("#prompt").submit(function() {
+          socket.emit("command", {name: name, msg: $("#m").val()});
+          $("#m").val("");
+          return false;
+        });
+        
+        socket.on("response", function(data) {
+          $("#messages").append($("<li>").text(data.message));
+          $("#messages").scrollTop($("#messages").prop("scrollHeight"));
+        });
+      });
+    </script>
+</html>
