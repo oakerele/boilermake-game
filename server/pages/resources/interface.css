@@ -65,6 +65,19 @@ body {
     font-family: 'Times New Roman', Times, serif
 }
 
-#user {font-family: 'Times New Roman', Times, serif; font-size: 16px; position: absolute; top: 50%;
-    left: 50%; border: 1px solid black; transform: translate(-50%, -50%);}
-#sub {font-family: 'Times New Roman', Times, serif; font-size: 16px;}
+#intro {
+    font-family: 'Times New Roman', Times, serif; 
+    font-size: 20px; 
+    position: absolute; 
+    top: 50%;
+    left: 50%; 
+    border: none; 
+    transform: translate(-50%, -50%);
+}
+
+#sub {font-family: 'Times New Roman', Times, serif; 
+    border: 1px solid black; 
+    font-size: 16px;
+    padding: 5px;
+    margin-left: 5px;
+}
