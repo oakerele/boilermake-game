@@ -3,7 +3,6 @@ var app = express()
 var http = require("http").Server(app)
 var io = require("socket.io")(http)
 var game = require("./game.js")
-var mongodb = require("mongodb")
 
 var port = process.env.PORT || 3001
 
@@ -17,42 +16,34 @@ app.get('/', function(req, res) {
 app.use(express.static(__dirname + "/pages"));
 
 ////////////////////////////////////////////////////////////////////////////////
-// SOCKET CONNECTIONS
+// GAME WORLD
 ////////////////////////////////////////////////////////////////////////////////
 
-game.newWorld();
+var testworld = require("./worlds/park.json")
+var world = game.loadWorld(testworld)
+
+////////////////////////////////////////////////////////////////////////////////
+// SOCKET CONNECTIONS
+////////////////////////////////////////////////////////////////////////////////
 
 io.on("connection", function(socket) {
 
     socket.on("disconnect", function() {
-        var list = game.getPlayers();
-        var namelist = game.getPlayerNames();
-        var name;
-        for (var i = 0; i < list.length; i++) {
-            if (list[i].socketId == socket.id) {
-                name = list[i].id;
-                game.removePlayer(i);
-            }
-        }
-        for (var i = 0; i < namelist.length; i++) {
-            if (namelist[i] == name) {
-                game.removePlayerName(i);
-                console.log("Removed Name!");
-            }
-        }
+        var player = world.getPlayerBySocketId(socket.id)
+        world.removePlayer(player)
+        console.log("-> player " + player.name + " left the server")
+        // TODO: actually delete player object
     });
     
     socket.on("command", function(data) {
         io.emit("response", {"message" : game.perform(data)});
     });
 
-    socket.on("register", function(data) {
-        var id = Math.floor(Math.random() * 2);
-        var room = game.getRoom(id);
-        var newUser = new game.newPlayer(data, socket.id, room);
-        game.addPlayer(newUser);
-        game.addPlayerName(data);
-        socket.emit("playerStatus", {room: room});
+    socket.on("register", function(name) {
+        world.addPlayer(name, socket.id)
+        console.log("-> player " + name + " has joined the server")
+        console.log(world.getPlayerByName(name).room)
+        socket.emit("playerStatus", {"room": world.getPlayerByName(name).room})
     });
 })
 

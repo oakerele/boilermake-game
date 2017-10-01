@@ -4,68 +4,126 @@
 
 module.exports = {
     "perform": function (msg) {return command(msg)},
-    "newPlayer": function (id, socketId, room) {return new Player(id, socketId, room)},
-    "addPlayer": function (player) {playerList.push(player)},
-    "removePlayer": function (loc) {playerList.splice(loc)},
-    "getPlayers": function () {return playerList},
-    "getPlayerNames": function () {return playerNames},
-    "addPlayerName": function (name) {playerNames.push(name);},
-    "removePlayerName": function (loc) {playerNames.splice(loc)},
-
-    "newWorld": function () {newWorld()},
-    "getRoom": function (id) {return roomList[id]}
+    "loadWorld": function (json) {return loadWorld(json)}
 }
+
+////////////////////////////////////////////////////////////////////////////////
+// WORLD
+////////////////////////////////////////////////////////////////////////////////
+
+var world = null
 
 ////////////////////////////////////////////////////////////////////////////////
 // DATA STRUCTURE
 ////////////////////////////////////////////////////////////////////////////////
 
 class Room {
-    constructor(id, desc, doors, items) {
-        this.id = id;
-        this.desc = desc;
-        this.doors = doors;
-        this.items = items;
+    constructor(id, name, description, doors, items) {
+        this.id = id // unique
+        this.name = name
+        this.description = description
+        this.doors = doors
+        this.items = items
     }
 }
 
 class Door {
-    constructor(roomnum, dir) {
-        this.roomnum = roomnum;
-        this.dir = dir;
+    constructor(direction, room) {
+        this.direction = direction // unique
+        this.room = room
+    }
+    
+    traverse(player) {
+        player.room = this.room
     }
 }
 
 class Item {
-    constructor(id) {
-        this.id = id;
+    constructor(id, name) {
+        this.id = id // unique
+        this.name = name
     }
 }
 
 class Player {
-    constructor(id, socketId, room) {
-        this.id = id;
-        this.socketId = socketId;
-        this.room = room;
+    constructor(name, socketId, room, inventory) {
+        this.name = name // unique
+        this.socketId = socketId
+        this.room = room
+        this.inventory = inventory
+    }
+    
+    move(direction) {
+        var door = world.getRoomById(this.room).doors.filter((door) => {return door.direction == direction})
+        if (door.length == 1) {
+            door[0].traverse(this)
+            return true
+        } else {
+            return false
+        }
     }
 }
 
-var playerList = []
-var roomList = []
-var doorList = []
-
-function newWorld() {
-    roomList.push(randRoom());
-    roomList.push(new Room("1", "living room", [new Door("0", "west")], "gun"));
+class World {
+    constructor(name, startingRooms, rooms, players) {
+        this.name = name
+        this.startingRooms = startingRooms
+        this.rooms = rooms
+        this.players = []
+    }
+    
+    // TODO: add in these functions to world
+    // "newPlayer": function (id, socketId, room) {return new Player(id, socketId, room)},
+    // ---- "addPlayer": function (player) {playerList.push(player)},
+    // ---- "removePlayer": function (loc) {playerList.splice(loc)}, 
+    // -- "getPlayers": function () {return playerList},
+    // -- "getPlayerNames": function () {return playerNames},
+    // "addPlayerName": function (name) {playerNames.push(name);},
+    // "removePlayerName": function (loc) {playerNames.splice(loc)},
+    // 
+    // "newWorld": function () {newWorld()},
+    // "getRoom": function (id) {return roomList[id]},
+    
+    addPlayer(name, socketId) {
+        var newPlayer = new Player(name, socketId, this.startingRooms[Math.floor(Math.random() * this.startingRooms.length)], [])
+        this.players.push(newPlayer)
+        return newPlayer
+    }
+    
+    removePlayer(name) {
+        this.players.filter((player) => {return player.name != name})
+    }
+    
+    get playerNames() {
+        return this.players.forEach((player) => {return player.name})
+    }
+    
+    getPlayerByName(name) {
+        return this.players.filter((player) => {return player.name == name})[0]
+    }
+    
+    getPlayerBySocketId(socketId) {
+        return this.players.filter((player) => {return player.socketId == socketId})[0]
+    }
+    
+    getRoomById(id) {
+        return this.rooms.filter((room) => {return room.id == id})[0]
+    }
 }
 
-function randRoom() {
-    var desc1 = "kitchen";
-    var desc2 = "living room";
-    var door1 = new Door("1", "east");
-    var item1 = "knife";
-    return new Room("0", desc1, [door1], item1);
+// WORLD GENERATION
+
+function loadWorld(json) {
+    world = new World(json.name, json.startingRooms, json.rooms.map((room) => {
+        return new Room(room.id, room.name, room.description, room.doors.map((door) => {
+            return new Door(door.direction, door.room)
+        }), room.items.map((item) => {
+            return new Item(item.id, item.name)
+        }))
+    }), json.players)
+    return world
 }
+
 ////////////////////////////////////////////////////////////////////////////////
 // PARSING
 ////////////////////////////////////////////////////////////////////////////////
@@ -213,16 +271,16 @@ function parseNounPhrase(tokens) {
             }
             break
         case 3:
-            if (tokens[0].part == "D" && tokens[1].part == "A" && tokens[2].part == "N") {
+            if (tokens[0].part == "D" && tokens[1].part == "A" && tokens[2].part == "N") { // D A N
                 phrase = {"part": "NP", "D": tokens[0], "A": tokens[1], "N": tokens[2], "PP": null}
-            } else if (tokens[0].part == "D" && tokens[1].part == "N" && tokens[2].part == "PP") {
+            } else if (tokens[0].part == "D" && tokens[1].part == "N" && tokens[2].part == "PP") { // D N PP
                 phrase = {"part": "NP", "D": tokens[0], "A": null, "N": tokens[1], "PP": tokens[2]}
-            } else if (tokens[0].part == "A" && tokens[1].part == "N" && tokens[2].part == "PP") {
+            } else if (tokens[0].part == "A" && tokens[1].part == "N" && tokens[2].part == "PP") { // A N PP
                 phrase = {"part": "NP", "D": null, "A": tokens[0], "N": tokens[1], "PP": tokens[2]}
             }
             break
         case 4:
-            if (tokens[0].part == "D" && tokens[1].part == "A" && tokens[2].part == "N" && tokens[3].part == "PP") {
+            if (tokens[0].part == "D" && tokens[1].part == "A" && tokens[2].part == "N" && tokens[3].part == "PP") { // D A N PP
                 phrase = {"part": "NP", "D": tokens[0], "A": tokens[1], "N": tokens[2], "PP": tokens[3]}
             }
             break
@@ -239,12 +297,12 @@ function parsePrepositionalPhrase(tokens) {
     
     switch (tokens.length) {
         case 1:
-            if (tokens[0].part == "P") {
+            if (tokens[0].part == "P") { // P
                 phrase = {"part": "PP", "P": tokens[0], "NP": null}
             }
             break
         case 2:
-            if (tokens[0].part == "P" && tokens[1].part == "NP") {
+            if (tokens[0].part == "P" && tokens[1].part == "NP") { // P NP
                 phrase = {"part": "PP", "P": tokens[0], "NP": tokens[1]}
             }
             break
@@ -271,7 +329,6 @@ function invoke(command, name) {
                     response = move(name, command.NP.N.string)
                 }
                 break
-            
         }
     }
     
@@ -281,26 +338,22 @@ function invoke(command, name) {
 // ACTION LOGIC
 
 function move(name, direction) {
-    // TODO: write implementation to actually move player
-    for (var i = 0; i < playerList.length; i++) {
-        if (playerList[i].id == name) {
-            var possibleDoors = [];
-            console.log(playerList[i]);
-            var playerDoorList = playerList[i].room.doors;
-            for (var j = 0; j < playerDoorList.length; j++) {
-                if (playerDoorList[j].dir == direction) {
-                    var roomnum = playerDoorList[j].roomnum;
-                    var room = roomList[roomnum];
-                    playerList[i].room = room;
-                    console.log("Player is in Room " + playerList[i].room.id);
-                    return "went " + direction;
-                } else {
-                    return "cannot go " + direction;
-                }
-            }
-        }
+    
+    var player = world.getPlayerByName(name)
+    console.log("before: ", player)
+    if (player) {
+        var success = player.move(direction)
+    } else {
+        success = false
     }
-    return "cannot go " + direction;
+    
+    console.log("after: ", player)
+    
+    if (success) {
+        return "went " + direction
+    } else {
+        return "cannot go " + direction
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
