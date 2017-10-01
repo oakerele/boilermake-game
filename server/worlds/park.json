@@ -18,7 +18,8 @@
             "description": "You are standing in a work area, there are numerous tools strewn about.",
             "doors": [
                 {"direction": "west", "room": 4},
-                {"direction": "north", "room": 2}],
+                {"direction": "north", "room": 2},
+                {"direction": "east", "room": 0}],
             "items": [
                 {"id": 0, "name": "shovel"},
                 {"id": 1, "name": "pitchfork"}]},

@@ -45,18 +45,20 @@
         socket.on("response", function(data) {
           $("#messages").append($("<li>").text(data.res.message));
           $("#messages").scrollTop($("#messages").prop("scrollHeight"));
-          if (data.res.room != "")
+          if (data.res.room != null)
             currRoom = data.res.room;
         });
 
         socket.on("playerStatus", function(data) {
           $("#messages").append($("<li>").text("You are in Room " + data.room));
           $("#messages").scrollTop($("#messages").prop("scrollHeight"));
-          currRoom = data.room.id;
+          currRoom = data.room;
         });
 
-        socket.on("enemies", function(data) {
-          if (data.enemy != name && currRoom == data.room)
+        socket.on("surroundings", function(data) {
+          if (data.enemy == name)
+            $("#messages").append($("<li>").text(data.room.description));
+          if (data.enemy != name && currRoom == data.room.id)
             $("#messages").append($("<li>").text("Player " + data.enemy + " is in the room!"));
           $("#messages").scrollTop($("#messages").prop("scrollHeight"));
         });

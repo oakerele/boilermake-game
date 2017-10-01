@@ -383,6 +383,7 @@ function move(name, direction) {
         // tell world about it
         
         response.playersInRoom = world.players.filter((p) => {return p.room == player.room}).map((p) => {return p.name})
+        response.room = player.room;
         console.log(response.playersInRoom);        
         
         response.message = "went " + direction
