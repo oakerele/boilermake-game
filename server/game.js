@@ -20,10 +20,10 @@ var world = null
 class Room {
     constructor(id, name, description, doors, items) {
         this.id = id // unique
-        this.name = name
-        this.description = description
-        this.doors = doors
-        this.items = items
+        this.name = name // string
+        this.description = description // string
+        this.doors = doors // list of door objects
+        this.items = items // list of item objects
     }
     
     addItem(item) {
@@ -35,14 +35,14 @@ class Room {
     }
     
     removeItem(itemId) {
-        this.items.filter((item) => {return item.id != itemId})
+        this.items = this.items.filter((item) => {return item.id != itemId})
     }
 }
 
 class Door {
     constructor(direction, room) {
         this.direction = direction // unique
-        this.room = room
+        this.room = room // room id
     }
     
     traverse(player) {
@@ -53,17 +53,27 @@ class Door {
 class Item {
     constructor(id, name) {
         this.id = id // unique
-        this.name = name
+        this.name = name // string
     }
 }
 
 class Player {
     constructor(name, socketId, room, inventory) {
         this.name = name // unique
-        this.socketId = socketId
-        this.room = room
-        this.inventory = inventory
+        this.socketId = socketId // socket.id
+        this.room = room // room id
+        this.inventory = inventory // list of item objects
     }
+    
+    addItem(item) {
+        this.inventory.push(item)
+    }
+    
+    removeItem(itemId) {
+        this.inventory = this.inventory.filter((item) => {return item.id != itemId})
+    }
+    
+    // ACTIONS
     
     move(direction) {
         var doors = world.getRoomById(this.room).doors.filter((door) => {return door.direction == direction})
@@ -80,11 +90,27 @@ class Player {
         var items = room.items.filter((i) => {return i.name == itemName})
         if (items.length >= 1) {
             room.removeItem(items[0].id)
-            this.inventory.push(items[0])
+            this.addItem(items[0])
             return true
         } else {
             return false
         }
+    }
+    
+    drop(itemName) {
+        var itemsToDrop = []
+        if (itemName == "inventory") {
+            itemsToDrop = this.inventory
+        } else {
+            itemsToDrop = this.inventory.filter((i) => {return i.name == itemName})
+        }
+        
+        itemsToDrop.forEach((i) => {
+            this.removeItem(i.id)
+            world.getRoomById(this.room).addItem(i)
+        })
+        
+        return itemsToDrop.length > 0
     }
 }
 
@@ -103,7 +129,9 @@ class World {
     }
     
     removePlayer(name) {
-        this.players = this.players.filter((player) => {return player.name != name})
+        var player = this.getPlayerByName(name)
+        player.drop("inventory")
+        this.players = this.players.filter((p) => {return p.name != name})
     }
     
     get playerNames() {
@@ -144,9 +172,9 @@ function loadWorld(json) {
 
 var Ds = [] // ["the", "a"]
 var As = [] // ["large", "small", "blue", "red", "gold"]
-var Ns = ["north", "east", "south", "west", "gun", "knife", "shovel", "pitchfork"] // ["sword", "axe", "my", "me"] // & any names
+var Ns = ["north", "east", "south", "west", "gun", "knife", "shovel", "pitchfork", "inventory"] // ["sword", "axe", "my", "me"] // & any names
 var Ps = [] // ["in", "on", "at", "to"]
-var Vs = ["go", "move", "walk", "take", "pick up"] // ["say", "yell", "whisper", "go", "take", "give", "pick up", "throw"]
+var Vs = ["go", "move", "walk", "take", "pick up", "drop", "leave"] // ["say", "yell", "whisper", "go", "take", "give", "pick up", "throw"]
 var playerNames = []
 
 
@@ -354,10 +382,15 @@ function invoke(command, name) {
                     response.message = take(name, command.NP.N.string)
                 }
                 break
+            case "drop":
+            case "leave":
+                if (command.NP && command.NP.N) {
+                    response.message = drop(name, command.NP.N.string)
+                }
         }
     }
     
-    return response // FIXME: temporary
+    return response
 }
 
 // ACTION LOGIC
@@ -376,7 +409,7 @@ function move(name, direction) {
     if (player) {
         var success = player.move(direction)
     } else {
-        success = false
+        var success = false
     }
     
     if (success) {
@@ -399,7 +432,7 @@ function take(name, item) {
     if (player) {
         var success = player.take(item)
     } else {
-        success = false
+        var success = false
     }
     
     if (success) {
@@ -407,24 +440,21 @@ function take(name, item) {
     } else {
         return item + " not in room"
     }
+}
+
+function drop(name, item) {
+    var player = world.getPlayerByName(name)
+    if (player) {
+        var success = player.drop(item)
+    } else {
+        var success = false
+    }
     
-    // for (var i = 0; i < playerList.length; i++) {
-    //     if (playerList[i].id == name) {
-    //         var itemList = playerList[i].room.items;
-    //         for (var j = 0; j < itemList.length; j++) {
-    //             if (item == itemList[j]) {
-    //                 var roomnum = playerList[i].room.id;
-    //                 roomList[roomnum].items.splice(j);
-    //                 playerList[i].items.push(item);
-    //                 console.log(playerList[i].items);
-    //                 return "took " + item;
-    //             } else {
-    //                 return item + " not in room";
-    //             }
-    //         }
-    //     }
-    // }
-    // return item + " not in room";
+    if (success) {
+        return "dropped " + item
+    } else {
+        return "you have no such items to drop"
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////

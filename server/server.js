@@ -30,7 +30,7 @@ io.on("connection", function(socket) {
 
     socket.on("disconnect", function() {
         var player = world.getPlayerBySocketId(socket.id)
-        world.removePlayer(player)
+        world.removePlayer(player.name)
         player.room = null
         console.log("-> player " + player.name + " left the server")
         // TODO: actually delete player object
@@ -44,7 +44,6 @@ io.on("connection", function(socket) {
             socket.emit("response", {"res": res});
         
         var surroundingRoom = world.rooms.filter((r) => {return res.room == r.id})[0];
-        console.log(surroundingRoom);
         res.playersInRoom.forEach((p) => {
             io.emit("surroundings", {"enemy": p, "room": surroundingRoom});
         })
@@ -53,7 +52,6 @@ io.on("connection", function(socket) {
     socket.on("register", function(name) {
         world.addPlayer(name, socket.id)
         console.log("-> player " + name + " has joined the server")
-        console.log(world.getPlayerByName(name).room)
         socket.emit("playerStatus", {"room": world.getPlayerByName(name).room})
     });
 })
