@@ -3,7 +3,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 module.exports = {
-    "perform": function (msg) {return command(msg)},
+    "perform": function (msg, world) {return command(msg, world)},
     "loadWorld": function (json) {return loadWorld(json)}
 }
 
@@ -135,7 +135,7 @@ class World {
     }
     
     get playerNames() {
-        return this.players.forEach((player) => {return player.name})
+        return this.players.map((player) => {return player.name})
     }
     
     getPlayerByName(name) {
@@ -174,11 +174,10 @@ var Ds = [] // ["the", "a"]
 var As = [] // ["large", "small", "blue", "red", "gold"]
 var Ns = ["north", "east", "south", "west", "gun", "knife", "shovel", "pitchfork", "inventory"] // ["sword", "axe", "my", "me"] // & any names
 var Ps = [] // ["in", "on", "at", "to"]
-var Vs = ["go", "move", "walk", "take", "pick up", "drop", "leave"] // ["say", "yell", "whisper", "go", "take", "give", "pick up", "throw"]
-var playerNames = []
+var Vs = ["go", "move", "walk", "take", "pick up", "drop", "leave", "stab"] // ["say", "yell", "whisper", "go", "take", "give", "pick up", "throw"]
 
 
-function lexer(text) {
+function lexer(text, world) {
     // TODO: invert search direction to search full string to empty string, not empty string to full string
     
     var tokens = []
@@ -197,7 +196,7 @@ function lexer(text) {
         } else if (As.indexOf(substr) >= 0) { // if string is an adjective
             tokens.push({"part": "A", "string": substr})
             substr = ""
-        } else if (Ns.indexOf(substr) >= 0 || playerNames.indexOf(substr) >= 0 || substr.match(/^\".*\"$/)) { // if string is a noun
+        } else if (Ns.indexOf(substr) >= 0 || world.playerNames.indexOf(substr) >= 0 || substr.match(/^\".*\"$/)) { // if string is a noun
             tokens.push({"part": "N", "string": substr})
             substr = ""
         } else if (Ps.indexOf(substr) >= 0) { // if string is a preposition
@@ -212,7 +211,7 @@ function lexer(text) {
     return tokens
 }
 
-function parser(tokens) {
+function parser(tokens, world) {
     //console.log("tokens: ", tokens)
     
     var lastValidPhrase = null
@@ -358,7 +357,7 @@ function parsePrepositionalPhrase(tokens) {
 
 // CALL ACTIONS
 
-function invoke(command, name) {
+function invoke(command, name, world) {
     var response = {
         message: "The command could not be understood.",
         scope: "local",
@@ -463,9 +462,9 @@ function drop(name, item) {
 // CLI
 ////////////////////////////////////////////////////////////////////////////////
 
-function command(msg) {
-    var tokens = lexer(msg.msg)
-    var command = parser(tokens)
-    var response = invoke(command, msg.name)
+function command(msg, world) {
+    var tokens = lexer(msg.msg, world)
+    var command = parser(tokens, world)
+    var response = invoke(command, msg.name, world)
     return response
 }
