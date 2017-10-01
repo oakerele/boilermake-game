@@ -45,12 +45,13 @@ io.on("connection", function(socket) {
         
         var surroundingRoom = world.rooms.filter((r) => {return res.room == r.id})[0];
         res.playersInRoom.forEach((p) => {
-            io.emit("surroundings", {"enemy": p, "room": surroundingRoom});
+            io.emit("surroundings", {"enemy": p, "room": surroundingRoom, "socket": res.playerId});
         })
     });
 
     socket.on("register", function(name) {
         world.addPlayer(name, socket.id)
+        socket.emit("id", {"socket": socket.id})
         console.log("-> player " + name + " has joined the server")
         socket.emit("playerStatus", {"room": world.getPlayerByName(name).room})
     });

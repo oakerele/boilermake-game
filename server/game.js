@@ -363,7 +363,8 @@ function invoke(command, name) {
         message: "The command could not be understood.",
         scope: "local",
         playersInRoom: [],
-        room: ""
+        room: "",
+        playerId: ""
     }
     
     if (command != null) {
@@ -401,7 +402,8 @@ function move(name, direction) {
         message: "",
         scope: "local",
         playersInRoom: [],
-        room: null
+        room: null,
+        playerId: ""
     }
     
     // do movement
@@ -414,7 +416,7 @@ function move(name, direction) {
     
     if (success) {
         // tell world about it
-        
+        response.playerId = player.socketId;
         response.playersInRoom = world.players.filter((p) => {return p.room == player.room}).map((p) => {return p.name})
         response.room = player.room;
         console.log(response.playersInRoom);        

@@ -25,6 +25,7 @@
 
         var socket = io();
         var name;
+        var socketId;
         var currRoom;
 
         $("#user").submit(function() {
@@ -41,6 +42,10 @@
           $("#m").val("");
           return false;
         });
+
+        socket.on("id", function(data) {
+          socketId = data.socket;
+        })
         
         socket.on("response", function(data) {
           $("#messages").append($("<li>").text(data.res.message));
@@ -56,7 +61,7 @@
         });
 
         socket.on("surroundings", function(data) {
-          if (data.enemy == name)
+          if (socketId == data.socket && data.enemy == name)
             $("#messages").append($("<li>").text(data.room.description));
           if (data.enemy != name && currRoom == data.room.id)
             $("#messages").append($("<li>").text("Player " + data.enemy + " is in the room!"));
