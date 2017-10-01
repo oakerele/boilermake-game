@@ -488,6 +488,11 @@ function attack(attacker, method, target, weapon=null) {
     switch (method) {
         case "stab":
             t.damage(20)
+            if (t.health <= 0) {
+                world.removePlayer(target)
+                // TODO: tell t that their dead
+                return target + " was stabbed to death"
+            }
             how = "stabbed"
             break;
     }
