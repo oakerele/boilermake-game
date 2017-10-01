@@ -58,11 +58,12 @@ class Item {
 }
 
 class Player {
-    constructor(name, socketId, room, inventory) {
+    constructor(name, socketId, room, inventory, health) {
         this.name = name // unique
         this.socketId = socketId // socket.id
         this.room = room // room id
         this.inventory = inventory // list of item objects
+        this.health = health // number
     }
     
     addItem(item) {
@@ -71,6 +72,14 @@ class Player {
     
     removeItem(itemId) {
         this.inventory = this.inventory.filter((item) => {return item.id != itemId})
+    }
+    
+    damage(amount) {
+        this.health = this.health - amount
+    }
+    
+    heal(amount) {
+        this.health = this.health + amount
     }
     
     // ACTIONS
@@ -123,7 +132,7 @@ class World {
     }
     
     addPlayer(name, socketId) {
-        var newPlayer = new Player(name, socketId, this.startingRooms[Math.floor(Math.random() * this.startingRooms.length)], [])
+        var newPlayer = new Player(name, socketId, this.startingRooms[Math.floor(Math.random() * this.startingRooms.length)], [], 100)
         this.players.push(newPlayer)
         return newPlayer
     }
@@ -173,7 +182,7 @@ function loadWorld(json) {
 var Ds = [] // ["the", "a"]
 var As = [] // ["large", "small", "blue", "red", "gold"]
 var Ns = ["north", "east", "south", "west", "gun", "knife", "shovel", "pitchfork", "inventory"] // ["sword", "axe", "my", "me"] // & any names
-var Ps = [] // ["in", "on", "at", "to"]
+var Ps = ["with"] // ["in", "on", "at", "to"]
 var Vs = ["go", "move", "walk", "take", "pick up", "drop", "leave", "stab"] // ["say", "yell", "whisper", "go", "take", "give", "pick up", "throw"]
 
 
@@ -371,21 +380,32 @@ function invoke(command, name, world) {
             case "go":
             case "move":
             case "walk":
-                if (command.NP && command.NP.N) {
+                if (command.NP) {
                     response = move(name, command.NP.N.string)
                     console.log(response)
                 }
                 break
             case "take":
             case "pick up":
-                if (command.NP && command.NP.N) {
+                if (command.NP) {
                     response.message = take(name, command.NP.N.string)
                 }
                 break
             case "drop":
             case "leave":
-                if (command.NP && command.NP.N) {
+                if (command.NP) {
                     response.message = drop(name, command.NP.N.string)
+                }
+            case "stab":
+                if (command.NP) {
+                    var method = command.V.string
+                    var target = command.NP.N.string
+                    var weapon = null
+                    if (command.PP && command.PP.P.string == "with" && command.PP.NP) {
+                        var weapon = command.PP.NP.N.string
+                    }
+                    
+                    response.message = attack(name, method, target, weapon)
                 }
         }
     }
@@ -456,6 +476,23 @@ function drop(name, item) {
     } else {
         return "you have no such items to drop"
     }
+}
+
+function attack(attacker, method, target, weapon=null) {
+    console.log(attacker + " attacking " + target + " with " + weapon)
+    var a = world.getPlayerByName(attacker)
+    var t = world.getPlayerByName(target)
+    
+    var how = ""
+    
+    switch (method) {
+        case "stab":
+            t.damage(20)
+            how = "stabbed"
+            break;
+    }
+    
+    return how + " " + target
 }
 
 ////////////////////////////////////////////////////////////////////////////////
