@@ -36,7 +36,7 @@ io.on("connection", function(socket) {
     });
     
     socket.on("command", function(data) {
-        var res = game.perform(data);
+        var res = game.perform(data, world);
         if (res.scope == "global")
             io.emit("response", {"res": res});
         else
