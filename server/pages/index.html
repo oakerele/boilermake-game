@@ -25,7 +25,8 @@
 
         var socket = io();
         var name;
-        
+        var currRoom;
+
         $("#user").submit(function() {
           $("#messages").show();
           $("#prompt").show();
@@ -42,12 +43,21 @@
         });
         
         socket.on("response", function(data) {
-          $("#messages").append($("<li>").text(data.message));
+          $("#messages").append($("<li>").text(data.res.message));
           $("#messages").scrollTop($("#messages").prop("scrollHeight"));
+          if (data.res.room != "")
+            currRoom = data.res.room;
         });
 
         socket.on("playerStatus", function(data) {
           $("#messages").append($("<li>").text("You are in Room " + data.room));
+          $("#messages").scrollTop($("#messages").prop("scrollHeight"));
+          currRoom = data.room.id;
+        });
+
+        socket.on("enemies", function(data) {
+          if (data.enemy != name && currRoom == data.room)
+            $("#messages").append($("<li>").text("Player " + data.enemy + " is in the room!"));
           $("#messages").scrollTop($("#messages").prop("scrollHeight"));
         });
       });

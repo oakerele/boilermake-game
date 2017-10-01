@@ -25,6 +25,18 @@ class Room {
         this.doors = doors
         this.items = items
     }
+    
+    addItem(item) {
+        this.items.push(item)
+    }
+    
+    getItemById(itemId) {
+        return this.items.filter((item) => {return item.id == itemId})[0]
+    }
+    
+    removeItem(itemId) {
+        this.items.filter((item) => {return item.id != itemId})
+    }
 }
 
 class Door {
@@ -54,9 +66,21 @@ class Player {
     }
     
     move(direction) {
-        var door = world.getRoomById(this.room).doors.filter((door) => {return door.direction == direction})
-        if (door.length == 1) {
-            door[0].traverse(this)
+        var doors = world.getRoomById(this.room).doors.filter((door) => {return door.direction == direction})
+        if (doors.length == 1) {
+            doors[0].traverse(this)
+            return true
+        } else {
+            return false
+        }
+    }
+    
+    take(itemName) {
+        var room = world.getRoomById(this.room)
+        var items = room.items.filter((i) => {return i.name == itemName})
+        if (items.length >= 1) {
+            room.removeItem(items[0].id)
+            this.inventory.push(items[0])
             return true
         } else {
             return false
@@ -71,18 +95,6 @@ class World {
         this.rooms = rooms
         this.players = []
     }
-    
-    // TODO: add in these functions to world
-    // "newPlayer": function (id, socketId, room) {return new Player(id, socketId, room)},
-    // ---- "addPlayer": function (player) {playerList.push(player)},
-    // ---- "removePlayer": function (loc) {playerList.splice(loc)}, 
-    // -- "getPlayers": function () {return playerList},
-    // -- "getPlayerNames": function () {return playerNames},
-    // "addPlayerName": function (name) {playerNames.push(name);},
-    // "removePlayerName": function (loc) {playerNames.splice(loc)},
-    // 
-    // "newWorld": function () {newWorld()},
-    // "getRoom": function (id) {return roomList[id]},
     
     addPlayer(name, socketId) {
         var newPlayer = new Player(name, socketId, this.startingRooms[Math.floor(Math.random() * this.startingRooms.length)], [])
@@ -132,13 +144,14 @@ function loadWorld(json) {
 
 var Ds = [] // ["the", "a"]
 var As = [] // ["large", "small", "blue", "red", "gold"]
-var Ns = ["north", "east", "south", "west"] // ["sword", "axe", "my", "me"] // & any names
+var Ns = ["north", "east", "south", "west", "gun", "knife", "shovel", "pitchfork"] // ["sword", "axe", "my", "me"] // & any names
 var Ps = [] // ["in", "on", "at", "to"]
-var Vs = ["go", "move", "walk"] // ["say", "yell", "whisper", "go", "take", "give", "pick up", "throw"]
+var Vs = ["go", "move", "walk", "take", "pick up"] // ["say", "yell", "whisper", "go", "take", "give", "pick up", "throw"]
 var playerNames = []
 
 
 function lexer(text) {
+    // TODO: invert search direction to search full string to empty string, not empty string to full string
     
     var tokens = []
     
@@ -318,7 +331,12 @@ function parsePrepositionalPhrase(tokens) {
 // CALL ACTIONS
 
 function invoke(command, name) {
-    response = "The command could not be understood."
+    var response = {
+        message: "The command could not be understood.",
+        scope: "local",
+        playersInRoom: [],
+        room: ""
+    }
     
     if (command != null) {
         switch (command.V.string) {
@@ -327,6 +345,13 @@ function invoke(command, name) {
             case "walk":
                 if (command.NP && command.NP.N) {
                     response = move(name, command.NP.N.string)
+                    console.log(response)
+                }
+                break
+            case "take":
+            case "pick up":
+                if (command.NP && command.NP.N) {
+                    response.message = take(name, command.NP.N.string)
                 }
                 break
         }
@@ -338,22 +363,66 @@ function invoke(command, name) {
 // ACTION LOGIC
 
 function move(name, direction) {
+    // form of response
+    var response = {
+        message: "",
+        scope: "local",
+        playersInRoom: [],
+        room: null
+    }
     
+    // do movement
     var player = world.getPlayerByName(name)
-    console.log("before: ", player)
     if (player) {
         var success = player.move(direction)
     } else {
         success = false
     }
     
-    console.log("after: ", player)
+    if (success) {
+        // tell world about it
+        
+        response.playersInRoom = world.players.filter((p) => {return p.room == player.room}).map((p) => {return p.name})        
+        
+        response.message = "went " + direction
+    } else {
+        response.message = "cannot go " + direction
+    }
+    
+    return response
+}
+
+function take(name, item) {
+    var player = world.getPlayerByName(name)
+    if (player) {
+        var success = player.take(item)
+    } else {
+        success = false
+    }
     
     if (success) {
-        return "went " + direction
+        return "took " + item
     } else {
-        return "cannot go " + direction
+        return item + " not in room"
     }
+    
+    // for (var i = 0; i < playerList.length; i++) {
+    //     if (playerList[i].id == name) {
+    //         var itemList = playerList[i].room.items;
+    //         for (var j = 0; j < itemList.length; j++) {
+    //             if (item == itemList[j]) {
+    //                 var roomnum = playerList[i].room.id;
+    //                 roomList[roomnum].items.splice(j);
+    //                 playerList[i].items.push(item);
+    //                 console.log(playerList[i].items);
+    //                 return "took " + item;
+    //             } else {
+    //                 return item + " not in room";
+    //             }
+    //         }
+    //     }
+    // }
+    // return item + " not in room";
 }
 
 ////////////////////////////////////////////////////////////////////////////////

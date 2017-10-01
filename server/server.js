@@ -36,7 +36,16 @@ io.on("connection", function(socket) {
     });
     
     socket.on("command", function(data) {
-        io.emit("response", {"message" : game.perform(data)});
+        var res = game.perform(data);
+        if (res.scope == "global")
+            io.emit("response", {"res": res});
+        else
+            socket.emit("response", {"res": res});
+        
+        console.log("!!!!: ", res.playersInRoom)
+        res.playersInRoom.forEach((p) => {
+            io.emit("enemies", {"enemy": p.name, "room": res.room});
+        })
     });
 
     socket.on("register", function(name) {

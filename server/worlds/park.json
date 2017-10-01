@@ -10,7 +10,8 @@
                 {"direction": "west", "room": 1},
                 {"direction": "north", "room": 2},
                 {"direction": "east", "room": 3}],
-            "items": []},
+            "items": [
+                {"id": 2, "name": "knife"}]},
         {
             "id": 1,
             "name": "work area",
