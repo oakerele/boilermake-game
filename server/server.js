@@ -37,19 +37,29 @@ io.on("connection", function(socket) {
         for (var i = 0; i < namelist.length; i++) {
             if (namelist[i] == name) {
                 game.removePlayerName(i);
-                console.log("Removed Name!");
+                console.log("Removed: " + name);
             }
         }
     });
     
     socket.on("command", function(data) {
-        io.emit("response", {"message" : game.perform(data)});
+        var res = game.perform(data);
+        if (res.scope == "global")
+            io.emit("response", {res : res});
+        else
+            socket.emit("response", {res : res});
+            
+        if (res.playersInRoom.length != 0) {
+            for (var i = 0; i < res.playersInRoom.length; i++) {
+                io.emit("enemies", {enemy : res.playersInRoom[i], room : res.room});
+            }
+        }
     });
 
     socket.on("register", function(data) {
         var id = Math.floor(Math.random() * 2);
         var room = game.getRoom(id);
-        var newUser = new game.newPlayer(data, socket.id, room);
+        var newUser = new game.newPlayer(data, socket.id, room, []);
         game.addPlayer(newUser);
         game.addPlayerName(data);
         socket.emit("playerStatus", {room: room});

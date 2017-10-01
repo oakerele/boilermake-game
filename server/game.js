@@ -4,7 +4,7 @@
 
 module.exports = {
     "perform": function (msg) {return command(msg)},
-    "newPlayer": function (id, socketId, room) {return new Player(id, socketId, room)},
+    "newPlayer": function (id, socketId, room, items) {return new Player(id, socketId, room, items)},
     "addPlayer": function (player) {playerList.push(player)},
     "removePlayer": function (loc) {playerList.splice(loc)},
     "getPlayers": function () {return playerList},
@@ -43,10 +43,11 @@ class Item {
 }
 
 class Player {
-    constructor(id, socketId, room) {
+    constructor(id, socketId, room, items) {
         this.id = id;
         this.socketId = socketId;
         this.room = room;
+        this.items = items;
     }
 }
 
@@ -56,7 +57,7 @@ var doorList = []
 
 function newWorld() {
     roomList.push(randRoom());
-    roomList.push(new Room("1", "living room", [new Door("0", "west")], "gun"));
+    roomList.push(new Room("1", "living room", [new Door("0", "west")], ["gun"]));
 }
 
 function randRoom() {
@@ -64,7 +65,7 @@ function randRoom() {
     var desc2 = "living room";
     var door1 = new Door("1", "east");
     var item1 = "knife";
-    return new Room("0", desc1, [door1], item1);
+    return new Room("0", desc1, [door1], [item1]);
 }
 ////////////////////////////////////////////////////////////////////////////////
 // PARSING
@@ -74,9 +75,9 @@ function randRoom() {
 
 var Ds = [] // ["the", "a"]
 var As = [] // ["large", "small", "blue", "red", "gold"]
-var Ns = ["north", "east", "south", "west"] // ["sword", "axe", "my", "me"] // & any names
+var Ns = ["north", "east", "south", "west", "gun", "knife"] // ["sword", "axe", "my", "me"] // & any names
 var Ps = [] // ["in", "on", "at", "to"]
-var Vs = ["go", "move", "walk"] // ["say", "yell", "whisper", "go", "take", "give", "pick up", "throw"]
+var Vs = ["go", "move", "walk", "take", "pick up"] // ["say", "yell", "whisper", "go", "take", "give", "pick up", "throw"]
 var playerNames = []
 
 
@@ -260,7 +261,12 @@ function parsePrepositionalPhrase(tokens) {
 // CALL ACTIONS
 
 function invoke(command, name) {
-    response = "The command could not be understood."
+    var response = {
+        message: "The command could not be understood.",
+        scope: "local",
+        playersInRoom: [],
+        room: ""
+    }
     
     if (command != null) {
         switch (command.V.string) {
@@ -268,10 +274,36 @@ function invoke(command, name) {
             case "move":
             case "walk":
                 if (command.NP && command.NP.N) {
-                    response = move(name, command.NP.N.string)
+                    var bool = move(name, command.NP.N.string)
+                    if (bool == false) {
+                        response.message = "cannot go " + command.NP.N.string;
+                        break;
+                    } else
+                        response.message = "went " + command.NP.N.string;
+
+                }
+                var currPlayer;
+                for (var i = 0; i < playerList.length; i++) {
+                    if (name == playerList[i].id) {
+                        currPlayer = playerList[i];
+                        break;
+                    }
+                }
+                for (var i = 0; i < playerList.length; i++) {
+                    if (name != playerList[i].id && currPlayer.room.id == playerList[i].room.id)
+                        response.playersInRoom.push(playerList[i].id);
+                }
+                if (response.playersInRoom.length > 0) {
+                    response.playersInRoom.push(currPlayer.id);
+                }
+                response.room = currPlayer.room.id;
+                break
+            case "take":
+            case "pick up":
+                if (command.NP && command.NP.N) {
+                    response.message = take(name, command.NP.N.string)
                 }
                 break
-            
         }
     }
     
@@ -285,22 +317,40 @@ function move(name, direction) {
     for (var i = 0; i < playerList.length; i++) {
         if (playerList[i].id == name) {
             var possibleDoors = [];
-            console.log(playerList[i]);
             var playerDoorList = playerList[i].room.doors;
             for (var j = 0; j < playerDoorList.length; j++) {
                 if (playerDoorList[j].dir == direction) {
                     var roomnum = playerDoorList[j].roomnum;
                     var room = roomList[roomnum];
                     playerList[i].room = room;
-                    console.log("Player is in Room " + playerList[i].room.id);
-                    return "went " + direction;
+                    return true;
                 } else {
-                    return "cannot go " + direction;
+                    return false;
                 }
             }
         }
     }
-    return "cannot go " + direction;
+    return false;
+}
+
+function take(name, item) {
+    for (var i = 0; i < playerList.length; i++) {
+        if (playerList[i].id == name) {
+            var itemList = playerList[i].room.items;
+            for (var j = 0; j < itemList.length; j++) {
+                if (item == itemList[j]) {
+                    var roomnum = playerList[i].room.id;
+                    roomList[roomnum].items.splice(j);
+                    playerList[i].items.push(item);
+                    console.log(playerList[i].items);
+                    return "took " + item;
+                } else {
+                    return item + " not in room";
+                }
+            }
+        }
+    }
+    return item + " not in room";
 }
 
 ////////////////////////////////////////////////////////////////////////////////
