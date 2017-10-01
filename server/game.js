@@ -3,51 +3,175 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 module.exports = {
-    "perform": function (msg) {return command(msg)},
-    "newPlayer": function (userId, socketId) {return new Player(userId, socketId)},
-    "addPlayer": function (player) {playerList.push(player)},
-    "removePlayer": function (loc) {playerList.splice(loc)},
-    "getPlayers": function () {return playerList},
-    "getPlayerNames": function () {return playerNames},
-    "addPlayerName": function (name) {playerNames.push(name);},
-    "removePlayerName": function (loc) {playerNames.splice(loc)}
+    "perform": function (msg, world) {return command(msg, world)},
+    "loadWorld": function (json) {return loadWorld(json)}
 }
+
+////////////////////////////////////////////////////////////////////////////////
+// WORLD
+////////////////////////////////////////////////////////////////////////////////
+
+var world = null
 
 ////////////////////////////////////////////////////////////////////////////////
 // DATA STRUCTURE
 ////////////////////////////////////////////////////////////////////////////////
 
 class Room {
-    constructor(roomname, desc, doors, items, players) {
-        this.roomname = roomname;
-        this.desc = desc;
-        this.doors = doors;
-        this.items = items;
-        this.players = players;
+    constructor(id, name, description, doors, items) {
+        this.id = id // unique
+        this.name = name // string
+        this.description = description // string
+        this.doors = doors // list of door objects
+        this.items = items // list of item objects
+    }
+    
+    addItem(item) {
+        this.items.push(item)
+    }
+    
+    getItemById(itemId) {
+        return this.items.filter((item) => {return item.id == itemId})[0]
+    }
+    
+    removeItem(itemId) {
+        this.items = this.items.filter((item) => {return item.id != itemId})
     }
 }
 
 class Door {
-    constructor(roomname, dir) {
-        this.roomname = roomname;
-        this.dir = dir;
+    constructor(direction, room) {
+        this.direction = direction // unique
+        this.room = room // room id
+    }
+    
+    traverse(player) {
+        player.room = this.room
     }
 }
 
 class Item {
-    constructor(name) {
-        this.name = name;
+    constructor(id, name) {
+        this.id = id // unique
+        this.name = name // string
     }
 }
 
 class Player {
-    constructor(userId, socketId) {
-        this.userId = userId;
-        this.socketId = socketId;
+    constructor(name, socketId, room, inventory, health) {
+        this.name = name // unique
+        this.socketId = socketId // socket.id
+        this.room = room // room id
+        this.inventory = inventory // list of item objects
+        this.health = health // number
+    }
+    
+    addItem(item) {
+        this.inventory.push(item)
+    }
+    
+    removeItem(itemId) {
+        this.inventory = this.inventory.filter((item) => {return item.id != itemId})
+    }
+    
+    damage(amount) {
+        this.health = this.health - amount
+    }
+    
+    heal(amount) {
+        this.health = this.health + amount
+    }
+    
+    // ACTIONS
+    
+    move(direction) {
+        var doors = world.getRoomById(this.room).doors.filter((door) => {return door.direction == direction})
+        if (doors.length == 1) {
+            doors[0].traverse(this)
+            return true
+        } else {
+            return false
+        }
+    }
+    
+    take(itemName) {
+        var room = world.getRoomById(this.room)
+        var items = room.items.filter((i) => {return i.name == itemName})
+        if (items.length >= 1) {
+            room.removeItem(items[0].id)
+            this.addItem(items[0])
+            return true
+        } else {
+            return false
+        }
+    }
+    
+    drop(itemName) {
+        var itemsToDrop = []
+        if (itemName == "inventory") {
+            itemsToDrop = this.inventory
+        } else {
+            itemsToDrop = this.inventory.filter((i) => {return i.name == itemName})
+        }
+        
+        itemsToDrop.forEach((i) => {
+            this.removeItem(i.id)
+            world.getRoomById(this.room).addItem(i)
+        })
+        
+        return itemsToDrop.length > 0
     }
 }
 
-var playerList = []
+class World {
+    constructor(name, startingRooms, rooms, players) {
+        this.name = name
+        this.startingRooms = startingRooms
+        this.rooms = rooms
+        this.players = []
+    }
+    
+    addPlayer(name, socketId) {
+        var newPlayer = new Player(name, socketId, this.startingRooms[Math.floor(Math.random() * this.startingRooms.length)], [], 100)
+        this.players.push(newPlayer)
+        return newPlayer
+    }
+    
+    removePlayer(name) {
+        var player = this.getPlayerByName(name)
+        player.drop("inventory")
+        this.players = this.players.filter((p) => {return p.name != name})
+    }
+    
+    get playerNames() {
+        return this.players.map((player) => {return player.name})
+    }
+    
+    getPlayerByName(name) {
+        return this.players.filter((player) => {return player.name == name})[0]
+    }
+    
+    getPlayerBySocketId(socketId) {
+        return this.players.filter((player) => {return player.socketId == socketId})[0]
+    }
+    
+    getRoomById(id) {
+        return this.rooms.filter((room) => {return room.id == id})[0]
+    }
+}
+
+// WORLD GENERATION
+
+function loadWorld(json) {
+    world = new World(json.name, json.startingRooms, json.rooms.map((room) => {
+        return new Room(room.id, room.name, room.description, room.doors.map((door) => {
+            return new Door(door.direction, door.room)
+        }), room.items.map((item) => {
+            return new Item(item.id, item.name)
+        }))
+    }), json.players)
+    return world
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // PARSING
@@ -55,16 +179,16 @@ var playerList = []
 
 // DICTIONARY
 
-var Ds = ["the", "a"]
-var As = ["large", "small", "blue", "red", "gold"]
-var Ns = ["sword", "axe", "my", "me"] // & any names
-var Ps = ["in", "on", "at", "to"]
-var Vs = ["say", "yell", "whisper", "go", "take", "give", "pick up", "throw"]
-var playerNames = []
+var Ds = [] // ["the", "a"]
+var As = [] // ["large", "small", "blue", "red", "gold"]
+var Ns = ["north", "east", "south", "west", "gun", "knife", "shovel", "pitchfork", "inventory"] // ["sword", "axe", "my", "me"] // & any names
+var Ps = ["with"] // ["in", "on", "at", "to"]
+var Vs = ["go", "move", "walk", "take", "pick up", "drop", "leave", "stab"] // ["say", "yell", "whisper", "go", "take", "give", "pick up", "throw"]
 
 
-function lexer(text) {
-
+function lexer(text, world) {
+    // TODO: invert search direction to search full string to empty string, not empty string to full string
+    
     var tokens = []
     
     var substr = ""
@@ -81,7 +205,7 @@ function lexer(text) {
         } else if (As.indexOf(substr) >= 0) { // if string is an adjective
             tokens.push({"part": "A", "string": substr})
             substr = ""
-        } else if (Ns.indexOf(substr) >= 0 || playerNames.indexOf(substr) >= 0 || substr.match(/^\".*\"$/)) { // if string is a noun
+        } else if (Ns.indexOf(substr) >= 0 || world.playerNames.indexOf(substr) >= 0 || substr.match(/^\".*\"$/)) { // if string is a noun
             tokens.push({"part": "N", "string": substr})
             substr = ""
         } else if (Ps.indexOf(substr) >= 0) { // if string is a preposition
@@ -96,7 +220,7 @@ function lexer(text) {
     return tokens
 }
 
-function parser(tokens) {
+function parser(tokens, world) {
     //console.log("tokens: ", tokens)
     
     var lastValidPhrase = null
@@ -196,16 +320,16 @@ function parseNounPhrase(tokens) {
             }
             break
         case 3:
-            if (tokens[0].part == "D" && tokens[1].part == "A" && tokens[2].part == "N") {
+            if (tokens[0].part == "D" && tokens[1].part == "A" && tokens[2].part == "N") { // D A N
                 phrase = {"part": "NP", "D": tokens[0], "A": tokens[1], "N": tokens[2], "PP": null}
-            } else if (tokens[0].part == "D" && tokens[1].part == "N" && tokens[2].part == "PP") {
+            } else if (tokens[0].part == "D" && tokens[1].part == "N" && tokens[2].part == "PP") { // D N PP
                 phrase = {"part": "NP", "D": tokens[0], "A": null, "N": tokens[1], "PP": tokens[2]}
-            } else if (tokens[0].part == "A" && tokens[1].part == "N" && tokens[2].part == "PP") {
+            } else if (tokens[0].part == "A" && tokens[1].part == "N" && tokens[2].part == "PP") { // A N PP
                 phrase = {"part": "NP", "D": null, "A": tokens[0], "N": tokens[1], "PP": tokens[2]}
             }
             break
         case 4:
-            if (tokens[0].part == "D" && tokens[1].part == "A" && tokens[2].part == "N" && tokens[3].part == "PP") {
+            if (tokens[0].part == "D" && tokens[1].part == "A" && tokens[2].part == "N" && tokens[3].part == "PP") { // D A N PP
                 phrase = {"part": "NP", "D": tokens[0], "A": tokens[1], "N": tokens[2], "PP": tokens[3]}
             }
             break
@@ -222,12 +346,12 @@ function parsePrepositionalPhrase(tokens) {
     
     switch (tokens.length) {
         case 1:
-            if (tokens[0].part == "P") {
+            if (tokens[0].part == "P") { // P
                 phrase = {"part": "PP", "P": tokens[0], "NP": null}
             }
             break
         case 2:
-            if (tokens[0].part == "P" && tokens[1].part == "NP") {
+            if (tokens[0].part == "P" && tokens[1].part == "NP") { // P NP
                 phrase = {"part": "PP", "P": tokens[0], "NP": tokens[1]}
             }
             break
@@ -240,18 +364,149 @@ function parsePrepositionalPhrase(tokens) {
 // ACTIONS
 ////////////////////////////////////////////////////////////////////////////////
 
-function invoke(c) {
-    console.log("C: ", c)
+// CALL ACTIONS
+
+function invoke(command, name, world) {
+    var response = {
+        message: "The command could not be understood.",
+        scope: "local",
+        playersInRoom: [],
+        room: "",
+        playerId: ""
+    }
     
-    return c // FIXME: temporary
+    if (command != null) {
+        switch (command.V.string) {
+            case "go":
+            case "move":
+            case "walk":
+                if (command.NP) {
+                    response = move(name, command.NP.N.string)
+                    console.log(response)
+                }
+                break
+            case "take":
+            case "pick up":
+                if (command.NP) {
+                    response.message = take(name, command.NP.N.string)
+                }
+                break
+            case "drop":
+            case "leave":
+                if (command.NP) {
+                    response.message = drop(name, command.NP.N.string)
+                }
+            case "stab":
+                if (command.NP) {
+                    var method = command.V.string
+                    var target = command.NP.N.string
+                    var weapon = null
+                    if (command.PP && command.PP.P.string == "with" && command.PP.NP) {
+                        var weapon = command.PP.NP.N.string
+                    }
+                    
+                    response.message = attack(name, method, target, weapon)
+                }
+        }
+    }
+    
+    return response
+}
+
+// ACTION LOGIC
+
+function move(name, direction) {
+    // form of response
+    var response = {
+        message: "",
+        scope: "local",
+        playersInRoom: [],
+        room: null,
+        playerId: ""
+    }
+    
+    // do movement
+    var player = world.getPlayerByName(name)
+    if (player) {
+        var success = player.move(direction)
+    } else {
+        var success = false
+    }
+    
+    if (success) {
+        // tell world about it
+        response.playerId = player.socketId;
+        response.playersInRoom = world.players.filter((p) => {return p.room == player.room}).map((p) => {return p.name})
+        response.room = player.room;
+        console.log(response.playersInRoom);        
+        
+        response.message = "went " + direction
+    } else {
+        response.message = "cannot go " + direction
+    }
+    
+    return response
+}
+
+function take(name, item) {
+    var player = world.getPlayerByName(name)
+    if (player) {
+        var success = player.take(item)
+    } else {
+        var success = false
+    }
+    
+    if (success) {
+        return "took " + item
+    } else {
+        return item + " not in room"
+    }
+}
+
+function drop(name, item) {
+    var player = world.getPlayerByName(name)
+    if (player) {
+        var success = player.drop(item)
+    } else {
+        var success = false
+    }
+    
+    if (success) {
+        return "dropped " + item
+    } else {
+        return "you have no such items to drop"
+    }
+}
+
+function attack(attacker, method, target, weapon=null) {
+    console.log(attacker + " attacking " + target + " with " + weapon)
+    var a = world.getPlayerByName(attacker)
+    var t = world.getPlayerByName(target)
+    
+    var how = ""
+    
+    switch (method) {
+        case "stab":
+            t.damage(20)
+            if (t.health <= 0) {
+                world.removePlayer(target)
+                // TODO: tell t that their dead
+                return target + " was stabbed to death"
+            }
+            how = "stabbed"
+            break;
+    }
+    
+    return how + " " + target
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // CLI
 ////////////////////////////////////////////////////////////////////////////////
 
-function command(text) {
-    var tokens = lexer(text)
-    var command = parser(tokens)
-    return invoke(command)
+function command(msg, world) {
+    var tokens = lexer(msg.msg, world)
+    var command = parser(tokens, world)
+    var response = invoke(command, msg.name, world)
+    return response
 }
