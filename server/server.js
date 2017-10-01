@@ -44,7 +44,7 @@ io.on("connection", function(socket) {
         
         console.log("!!!!: ", res.playersInRoom)
         res.playersInRoom.forEach((p) => {
-            io.emit("enemies", {"enemy": p.name, "room": res.room});
+            io.emit("enemies", {"enemy": p, "room": res.room});
         })
     });
 

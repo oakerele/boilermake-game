@@ -103,7 +103,7 @@ class World {
     }
     
     removePlayer(name) {
-        this.players.filter((player) => {return player.name != name})
+        this.players = this.players.filter((player) => {return player.name != name})
     }
     
     get playerNames() {
@@ -382,7 +382,8 @@ function move(name, direction) {
     if (success) {
         // tell world about it
         
-        response.playersInRoom = world.players.filter((p) => {return p.room == player.room}).map((p) => {return p.name})        
+        response.playersInRoom = world.players.filter((p) => {return p.room == player.room}).map((p) => {return p.name})
+        console.log(response.playersInRoom);        
         
         response.message = "went " + direction
     } else {
