@@ -1,8 +1,8 @@
 {
-  "name": "server2",
+  "name": "boilermake-game",
   "version": "1.0.0",
-  "description": "Game with socket.io",
-  "main": "index.js",
+  "description": "A Multiplayer Text Adventure",
+  "main": "server.js",
   "dependencies": {
     "express": "^4.16.1",
     "mongodb": "^2.2.31",
@@ -16,7 +16,7 @@
     "type": "git",
     "url": "git+https://github.com/oakerele/boilermake-game.git"
   },
-  "author": "",
+  "author": "William Marrujo, Simon Huang",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/oakerele/boilermake-game/issues"
